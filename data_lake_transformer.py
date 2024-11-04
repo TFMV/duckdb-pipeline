@@ -97,9 +97,12 @@ class DataLakeTransformer:
         actor.login AS "user_name",
         actor.display_login AS "user_display_name",
         type AS "event_type",
+        payload.action AS "event_action",
         repo.id AS "repo_id",
         repo.name AS "repo_name",
         repo.url AS "repo_url",
+        org.id AS "org_id",
+        org.login AS "org_name",
         created_at AS "event_date"
       FROM '{raw_dataset}'
     '''
@@ -117,9 +120,12 @@ class DataLakeTransformer:
     query = f'''
       SELECT 
         event_type,
+        event_action,
         repo_id,
         repo_name,
         repo_url,
+        org_id,
+        org_name,
         DATE_TRUNC('day',CAST(event_date AS TIMESTAMP)) AS event_date,
         count(*) AS event_count
       FROM '{raw_dataset}'
@@ -223,7 +229,7 @@ class DataLakeTransformer:
       self.con.execute(f"SET s3_endpoint='{s3_endpoint}'")
 
   def _tune_engine(self):
-    self.con.execute("SET memory_limit = '4GB'")
+    self.con.execute("SET memory_limit = '8GB'")
     self.con.execute("SET preserve_insertion_order=false")
 
   def __del__(self):
