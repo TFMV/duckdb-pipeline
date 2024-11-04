@@ -22,6 +22,7 @@ class DataLakeTransformer:
     self.dataset_base_path = dataset_base_path
     self.config = self._load_config()
     self.con = self.duckdb_connection()
+    self._tune_engine()
     self._set_duckdb_s3_credentials()
     logging.info("DuckDB connection initiated")
   
@@ -190,21 +191,6 @@ class DataLakeTransformer:
     else:
         timestamp = process_date.strftime("%Y%m%d")
     return f"{data_type}_{timestamp}.{file_extension}"
-   
-  # def _generate_export_filename(self, data_type, file_extension='parquet', partition_key=None) -> str:
-  #   """
-  #   Generate a unique filename for the exported data file.
-
-  #   :param base_name: Base name for the file.
-  #   :param data_type: Type of data being processed.
-  #   :return: Generated filename.
-  #   """
-  #   timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-  #   unique_id = str(uuid.uuid4())[:8]  # Use first 8 characters of a UUID
-  #   filename_parts = [data_type, timestamp, unique_id]
-  #   if partition_key:
-  #     filename_parts.insert(2, partition_key)
-  #   return "_".join(filename_parts) + "." + file_extension
   
   def _load_config(self):
     """ Load configuration from the given path """
@@ -235,6 +221,10 @@ class DataLakeTransformer:
     # Set S3 endpoint if provided
     if s3_endpoint:
       self.con.execute(f"SET s3_endpoint='{s3_endpoint}'")
+
+  def _tune_engine(self):
+    self.con.execute("SET memory_limit = '4GB'")
+    self.con.execute("SET preserve_insertion_order=false")
 
   def __del__(self):
     """Ensure the DuckDB connection is closed when the object is destroyed."""
